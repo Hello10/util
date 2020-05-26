@@ -4,7 +4,8 @@ const {
   clipper,
   defined,
   hasAllKeys,
-  randomInt
+  randomInt,
+  rounder
 } = require('./dist/index');
 
 describe('utils', ()=> {
@@ -69,6 +70,38 @@ describe('utils', ()=> {
       });
       Assert.throws(()=> {
         randomInt({min: 101.101});
+      });
+    });
+  });
+
+  describe('rounder', ()=> {
+    it('should round numbers to specified precision', ()=> {
+      const round = rounder();
+      const round2 = rounder({decimals: 2});
+      const round3 = rounder({decimals: 3});
+      const num = 10.3457891;
+      Assert.equal(round(num), 10);
+      Assert.equal(round2(num), 10.35);
+      Assert.equal(round3(num), 10.346);
+    });
+
+    it('should allow op to specified', ()=> {
+      const num = 101.3259822;
+      const round3floor = rounder({decimals: 3, op: Math.floor});
+      const round5ceil = rounder({decimals: 5, op: Math.ceil});
+      Assert.equal(round3floor(num), 101.325);
+      Assert.equal(round5ceil(num), 101.32599);
+    });
+
+    it('should error on bad args', ()=> {
+      Assert.throws(()=> {
+        rounder({decimals: -1});
+      });
+      Assert.throws(()=> {
+        rounder({decimals: 1.34});
+      });
+      Assert.throws(()=> {
+        rounder({decimals: 3, op: 'fart'});
       });
     });
   });

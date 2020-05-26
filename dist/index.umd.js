@@ -53,10 +53,29 @@
     return min + offset;
   }
 
+  function rounder({
+    decimals = 0,
+    op = Math.round
+  } = {}) {
+    if (!(Number.isInteger(decimals) && decimals >= 0)) {
+      throw new Error('Argument decimals must be non-negative integer');
+    }
+
+    if (!(op && op.constructor === Function)) {
+      throw new Error('Argument op must be a function');
+    }
+
+    const multiplier = 10 ** decimals;
+    return function round(num) {
+      return op(num * multiplier) / multiplier;
+    };
+  }
+
   exports.clipper = clipper;
   exports.defined = defined;
   exports.hasAllKeys = hasAllKeys;
   exports.randomInt = randomInt;
+  exports.rounder = rounder;
 
 })));
 //# sourceMappingURL=index.umd.js.map
