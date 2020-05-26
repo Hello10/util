@@ -30,7 +30,7 @@ function hasAllKeys(keys) {
 function randomInt({
   min = 0,
   max = 1
-}) {
+} = {}) {
   const {
     isInteger
   } = Number;

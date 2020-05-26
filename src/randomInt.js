@@ -1,4 +1,4 @@
-export default function randomInt ({min = 0, max = 1}) {
+export default function randomInt ({min = 0, max = 1} = {}) {
   const {isInteger} = Number;
   if (!isInteger(min) || !isInteger(max)) {
     throw new Error('min and max must be integers');

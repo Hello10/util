@@ -64,6 +64,22 @@ describe('utils', ()=> {
       }
     });
 
+    it('should default to zero and one', ()=> {
+      let seen0 = false;
+      let seen1 = false;
+      for (let i = 0; i < 50; i++) {
+        const zeroOrOne = randomInt();
+        if (zeroOrOne === 0) {
+          seen0 = true;
+        }
+        if (zeroOrOne === 1) {
+          seen1 = true;
+        }
+        Assert([0, 1].includes(zeroOrOne));
+      }
+      Assert(seen0 && seen1);
+    });
+
     it('should throw on bad inputs', ()=> {
       Assert.throws(()=> {
         randomInt({min: 100, max: 1});
