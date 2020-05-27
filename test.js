@@ -5,6 +5,7 @@ const {
   charkeys,
   clipper,
   defined,
+  hasAllCharkeys,
   hasAllKeys,
   randomInt,
   rounder,
@@ -65,17 +66,6 @@ describe('utils', ()=> {
       const output = charkeys(input);
       Assert.deepEqual(output, {x: 1, y: 2, z: 3});
     });
-
-    it('should group keys with same first letter by array', ()=> {
-      const input = {
-        xylophone: 1,
-        xonkey: 2,
-        xebra: 3,
-        zebra: 4
-      };
-      const output = charkeys(input);
-      Assert.deepEqual(output, {x: [1, 2, 3], z: 4});
-    });
   });
 
   describe('clipper', ()=> {
@@ -111,6 +101,16 @@ describe('utils', ()=> {
       Assert.equal(defined(x), false);
       Assert.equal(defined(y), false);
       Assert.equal(defined(z), true);
+    });
+  });
+
+  describe('hasAllCharkeys', ()=> {
+    it('should check whether all charkeys exists', ()=> {
+      const hasAbc = hasAllCharkeys(['a', 'b', 'c']);
+      const yes = {axe: 1, animal: 2, arp: 3, bug: 4, channel: 5};
+      const no = {car: 10};
+      Assert(hasAbc(yes));
+      Assert(!hasAbc(no));
     });
   });
 

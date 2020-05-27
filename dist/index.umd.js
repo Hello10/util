@@ -239,17 +239,7 @@
   function charkeys(obj) {
     return Object.entries(obj).reduce((singled, [key, val]) => {
       const k = key[0];
-
-      if (k in singled) {
-        if (!Array.isArray(singled[k])) {
-          singled[k] = [singled[k]];
-        }
-
-        singled[k].push(val);
-      } else {
-        singled[k] = val;
-      }
-
+      singled[k] = val;
       return singled;
     }, {});
   }
@@ -280,6 +270,13 @@
       return keys.every(key => {
         return Object.prototype.hasOwnProperty.call(obj, key);
       });
+    };
+  }
+
+  function hasAllCharkeys(keys) {
+    return function has(obj) {
+      obj = charkeys(obj);
+      return hasAllKeys(keys)(obj);
     };
   }
 
@@ -339,6 +336,7 @@
   exports.charkeys = charkeys;
   exports.clipper = clipper;
   exports.defined = defined;
+  exports.hasAllCharkeys = hasAllCharkeys;
   exports.hasAllKeys = hasAllKeys;
   exports.randomInt = randomInt;
   exports.rounder = rounder;
