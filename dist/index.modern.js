@@ -129,5 +129,18 @@ function rounder({
   };
 }
 
-export { betweener, clipper, defined, hasAllKeys, randomInt, rounder };
+function upto(n) {
+  let i = 0;
+  const results = [];
+  return function f(fn) {
+    while (i <= n) {
+      results.push(fn(i));
+      i++;
+    }
+
+    return results;
+  };
+}
+
+export { betweener, clipper, defined, hasAllKeys, randomInt, rounder, upto };
 //# sourceMappingURL=index.modern.js.map

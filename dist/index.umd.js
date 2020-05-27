@@ -304,12 +304,26 @@
     };
   }
 
+  function upto(n) {
+    let i = 0;
+    const results = [];
+    return function f(fn) {
+      while (i <= n) {
+        results.push(fn(i));
+        i++;
+      }
+
+      return results;
+    };
+  }
+
   exports.betweener = betweener;
   exports.clipper = clipper;
   exports.defined = defined;
   exports.hasAllKeys = hasAllKeys;
   exports.randomInt = randomInt;
   exports.rounder = rounder;
+  exports.upto = upto;
 
 })));
 //# sourceMappingURL=index.umd.js.map

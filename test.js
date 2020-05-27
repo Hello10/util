@@ -6,7 +6,8 @@ const {
   defined,
   hasAllKeys,
   randomInt,
-  rounder
+  rounder,
+  upto
 } = require('./dist/index');
 
 describe('utils', ()=> {
@@ -163,6 +164,23 @@ describe('utils', ()=> {
       Assert.throws(()=> {
         rounder({decimals: 3, op: 'fart'});
       });
+    });
+  });
+
+  describe('upto', ()=> {
+    it('should call a function repeatedly with index', ()=> {
+      const squares = [];
+      upto(9)((i)=> {
+        squares.push(i * i);
+      });
+      Assert.deepEqual(squares, [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]);
+    });
+  });
+
+  describe('upto', ()=> {
+    it('should call a function repeatedly with index', ()=> {
+      const squares = upto(9)((i)=> i * i);
+      Assert.deepEqual(squares, [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]);
     });
   });
 });
