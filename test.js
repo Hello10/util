@@ -1,6 +1,7 @@
 const Assert = require('assert');
 
 const {
+  betweener,
   clipper,
   defined,
   hasAllKeys,
@@ -9,6 +10,49 @@ const {
 } = require('./dist/index');
 
 describe('utils', ()=> {
+  describe('betweener', ()=> {
+    it('should test intervals', ()=> {
+      const betweens = [
+        betweener('(-1.5, 3.5)'),
+        betweener('[-1.5, 3.5)'),
+        betweener('(-1.5, 3.5]'),
+        betweener('[-1.5, 3.5]')
+      ];
+
+      const tests = [
+        [-1.75, [false, false, false, false]],
+        [-1.5, [false, true, false, true]],
+        [0.25, [true, true, true, true]],
+        [3.5, [false, false, true, true]],
+        [5, [false, false, false, false]]
+      ];
+
+      for (const [value, expects] of tests) {
+        for (let i = 0; i < betweens.length; i++) {
+          const between = betweens[i];
+          const expect = expects[i];
+          Assert.equal(between(value), expect);
+        }
+      }
+    });
+
+    it('should allow Infinity', ()=> {
+      const lessThan10 = betweener('(-∞,10)');
+      Assert.equal(lessThan10(-100000), true);
+      Assert.equal(lessThan10(10), false);
+
+      const anything = betweener('(-∞, ∞)');
+      Assert.equal(anything(101010110), true);
+      Assert.equal(anything(-10234123434), true);
+    });
+
+    it('should throw on bad input', ()=> {
+      Assert.throws(()=> {
+        betweener('abcd');
+      });
+    });
+  });
+
   describe('clipper', ()=> {
     it('should clip min', ()=> {
       const nonNegative = clipper({min: 0});
