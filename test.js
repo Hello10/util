@@ -2,6 +2,7 @@ const Assert = require('assert');
 
 const {
   betweener,
+  charkeys,
   clipper,
   defined,
   hasAllKeys,
@@ -51,6 +52,29 @@ describe('utils', ()=> {
       Assert.throws(()=> {
         betweener('abcd');
       });
+    });
+  });
+
+  describe('charkeys', ()=> {
+    it('should flatten obj keys to single char', ()=> {
+      const input = {
+        xylophone: 1,
+        yams: 2,
+        zebra: 3
+      };
+      const output = charkeys(input);
+      Assert.deepEqual(output, {x: 1, y: 2, z: 3});
+    });
+
+    it('should group keys with same first letter by array', ()=> {
+      const input = {
+        xylophone: 1,
+        xonkey: 2,
+        xebra: 3,
+        zebra: 4
+      };
+      const output = charkeys(input);
+      Assert.deepEqual(output, {x: [1, 2, 3], z: 4});
     });
   });
 

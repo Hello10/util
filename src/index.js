@@ -1,4 +1,5 @@
 export {default as betweener} from './betweener';
+export {default as charkeys} from './charkeys';
 export {default as clipper} from './clipper';
 export {default as defined} from './defined';
 export {default as hasAllKeys} from './hasAllKeys';

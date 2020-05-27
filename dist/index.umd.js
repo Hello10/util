@@ -236,6 +236,24 @@
     };
   }
 
+  function charkeys(obj) {
+    return Object.entries(obj).reduce((singled, [key, val]) => {
+      const k = key[0];
+
+      if (k in singled) {
+        if (!Array.isArray(singled[k])) {
+          singled[k] = [singled[k]];
+        }
+
+        singled[k].push(val);
+      } else {
+        singled[k] = val;
+      }
+
+      return singled;
+    }, {});
+  }
+
   function defined(val) {
     return typeof val !== 'undefined';
   }
@@ -318,6 +336,7 @@
   }
 
   exports.betweener = betweener;
+  exports.charkeys = charkeys;
   exports.clipper = clipper;
   exports.defined = defined;
   exports.hasAllKeys = hasAllKeys;
