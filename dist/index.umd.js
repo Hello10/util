@@ -280,6 +280,26 @@
     };
   }
 
+  function omitter(keys) {
+    let test;
+
+    if (Array.isArray(keys)) {
+      test = key => keys.includes(key);
+    } else {
+      test = keys;
+    }
+
+    return function omit(obj) {
+      return Object.entries(obj).reduce((result, [key, value]) => {
+        if (!test(key, value)) {
+          result[key] = obj[key];
+        }
+
+        return result;
+      }, {});
+    };
+  }
+
   function randomInt({
     min = 0,
     max = 1
@@ -338,6 +358,7 @@
   exports.defined = defined;
   exports.hasAllCharkeys = hasAllCharkeys;
   exports.hasAllKeys = hasAllKeys;
+  exports.omitter = omitter;
   exports.randomInt = randomInt;
   exports.rounder = rounder;
   exports.upto = upto;

@@ -105,6 +105,26 @@ function hasAllCharkeys(keys) {
   };
 }
 
+function omitter(keys) {
+  let test;
+
+  if (Array.isArray(keys)) {
+    test = key => keys.includes(key);
+  } else {
+    test = keys;
+  }
+
+  return function omit(obj) {
+    return Object.entries(obj).reduce((result, [key, value]) => {
+      if (!test(key, value)) {
+        result[key] = obj[key];
+      }
+
+      return result;
+    }, {});
+  };
+}
+
 function randomInt({
   min = 0,
   max = 1
@@ -157,5 +177,5 @@ function upto(n) {
   };
 }
 
-export { betweener, charkeys, clipper, defined, hasAllCharkeys, hasAllKeys, randomInt, rounder, upto };
+export { betweener, charkeys, clipper, defined, hasAllCharkeys, hasAllKeys, omitter, randomInt, rounder, upto };
 //# sourceMappingURL=index.modern.js.map

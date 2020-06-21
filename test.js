@@ -7,6 +7,7 @@ const {
   defined,
   hasAllCharkeys,
   hasAllKeys,
+  omitter,
   randomInt,
   rounder,
   upto
@@ -120,6 +121,24 @@ describe('utils', ()=> {
       Assert.equal(xyz({}), false);
       Assert.equal(xyz({x: 10, y: 11}), false);
       Assert.equal(xyz({w: 10, x: 1, y: 2, z: 3}), true);
+    });
+  });
+
+  describe('omitter', ()=> {
+    const obj = {
+      a: 1,
+      b: 2,
+      c: 3
+    };
+
+    it('should make function that omits keys from array', ()=> {
+      const omit = omitter(['a', 'b']);
+      Assert.deepEqual(omit(obj), {c: 3});
+    });
+
+    it('should make function omits by test', ()=> {
+      const omit = omitter((k, v)=> `${k}${v}` === 'b2');
+      Assert.deepEqual(omit(obj), {a: 1, c: 3});
     });
   });
 
