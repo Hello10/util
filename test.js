@@ -5,6 +5,7 @@ const {
   charkeys,
   clipper,
   defined,
+  flatten,
   hasAllCharkeys,
   hasAllKeys,
   omitter,
@@ -224,6 +225,51 @@ describe('utils', ()=> {
     it('should call a function repeatedly with index', ()=> {
       const squares = upto(9)((i)=> i * i);
       Assert.deepEqual(squares, [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]);
+    });
+  });
+
+  describe('flatten', ()=> {
+    it('Should flatten nested', ()=> {
+      const output = flatten({
+        a: {
+          b: {
+            c: 1
+          }
+        }
+      });
+      Assert.deepEqual(output, {'a.b.c': 1});
+    });
+
+    it('Should handle empty objects', ()=> {
+      const output = flatten({
+        a: {}
+      });
+      Assert.deepEqual(output, {a: {}});
+    });
+
+    it('Should handle deeply nested properties', ()=> {
+      const obj = {
+        a: {
+          b: {
+            c: 1,
+            d: 2,
+            x: {
+              y: {
+                z: [1]
+              }
+            }
+          }
+        },
+        x: 'test'
+      };
+      const output = flatten(obj);
+      const expected = {
+        'a.b.c': 1,
+        'a.b.d': 2,
+        'a.b.x.y.z': [1],
+        x: 'test'
+      };
+      Assert.deepEqual(output, expected);
     });
   });
 });

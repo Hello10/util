@@ -265,6 +265,25 @@
     };
   }
 
+  function flatten(obj, key = null, result = {}) {
+    if (obj && obj.constructor === Object) {
+      const entries = Object.entries(obj);
+
+      if (entries.length) {
+        for (const [k, v] of entries) {
+          const new_key = key ? `${key}.${k}` : k;
+          flatten(v, new_key, result);
+        }
+      } else {
+        result[key] = {};
+      }
+    } else {
+      result[key] = obj;
+    }
+
+    return result;
+  }
+
   function hasAllKeys(keys) {
     return function hasAll(obj) {
       return keys.every(key => {
@@ -356,6 +375,7 @@
   exports.charkeys = charkeys;
   exports.clipper = clipper;
   exports.defined = defined;
+  exports.flatten = flatten;
   exports.hasAllCharkeys = hasAllCharkeys;
   exports.hasAllKeys = hasAllKeys;
   exports.omitter = omitter;
