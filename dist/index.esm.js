@@ -260,23 +260,29 @@ function clipper({
   };
 }
 
-function flatten(obj, key = null, result = {}) {
-  if (obj && obj.constructor === Object) {
-    const entries = Object.entries(obj);
+function flattener({
+  join = '.',
+  into = {}
+} = {}) {
+  return function flatten(obj, key = null) {
+    if (obj && obj.constructor === Object) {
+      const entries = Object.entries(obj);
 
-    if (entries.length) {
-      for (const [k, v] of entries) {
-        const new_key = key ? `${key}.${k}` : k;
-        flatten(v, new_key, result);
+      if (entries.length) {
+        for (const [k, v] of entries) {
+          const parts = key ? [key, k] : [k];
+          const new_key = parts.join(join);
+          flatten(v, new_key);
+        }
+      } else {
+        into[key] = {};
       }
     } else {
-      result[key] = {};
+      into[key] = obj;
     }
-  } else {
-    result[key] = obj;
-  }
 
-  return result;
+    return into;
+  };
 }
 
 function hasAllKeys(keys) {
@@ -366,5 +372,5 @@ function upto(n) {
   };
 }
 
-export { betweener, charkeys, clipper, defined, flatten, hasAllCharkeys, hasAllKeys, omitter, randomInt, rounder, upto };
+export { betweener, charkeys, clipper, defined, flattener, hasAllCharkeys, hasAllKeys, omitter, randomInt, rounder, upto };
 //# sourceMappingURL=index.esm.js.map

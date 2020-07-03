@@ -5,7 +5,7 @@ const {
   charkeys,
   clipper,
   defined,
-  flatten,
+  flattener,
   hasAllCharkeys,
   hasAllKeys,
   omitter,
@@ -228,9 +228,9 @@ describe('utils', ()=> {
     });
   });
 
-  describe('flatten', ()=> {
+  describe('flattener', ()=> {
     it('Should flatten nested', ()=> {
-      const output = flatten({
+      const output = flattener()({
         a: {
           b: {
             c: 1
@@ -241,7 +241,7 @@ describe('utils', ()=> {
     });
 
     it('Should handle empty objects', ()=> {
-      const output = flatten({
+      const output = flattener()({
         a: {}
       });
       Assert.deepEqual(output, {a: {}});
@@ -262,12 +262,33 @@ describe('utils', ()=> {
         },
         x: 'test'
       };
-      const output = flatten(obj);
+      const output = flattener()(obj);
       const expected = {
         'a.b.c': 1,
         'a.b.d': 2,
         'a.b.x.y.z': [1],
         x: 'test'
+      };
+      Assert.deepEqual(output, expected);
+    });
+
+    it('Should handle some config params', ()=> {
+      const flatten = flattener({
+        join: ':',
+        into: {'o:m:g': 1}
+      });
+      const output = flatten({
+        o: {
+          m: {
+            c: 'how bizarre',
+            d: 'if you leave'
+          }
+        }
+      });
+      const expected = {
+        'o:m:g': 1,
+        'o:m:d': 'if you leave',
+        'o:m:c': 'how bizarre'
       };
       Assert.deepEqual(output, expected);
     });
