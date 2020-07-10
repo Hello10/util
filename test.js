@@ -257,15 +257,34 @@ describe('utils', ()=> {
       const f3 = Foo.get();
       const p3 = Pom.get();
 
-      const refs = [
-        f1, f2, b1, b2,
-        b3, p1, p2, b4,
-        f3, p3
-      ];
-      const hello = refs.map((ref)=> ref.hi).join(',');
-      Assert.equal(
-        hello,
+      function assertHi (refs, expected) {
+        const hello = refs.map((ref)=> ref.hi).join(',');
+        Assert.equal(
+          hello,
+          expected
+        );
+      }
+
+      assertHi(
+        [f1, f2, b1, b2, b3, p1, p2, b4, f3, p3],
         'Foo=1,Foo=1,Bar=2,Bar=2,Bar=2,Pom=3,Pom=3,Bar=2,Foo=1,Pom=3'
+      );
+
+      class Mid extends Base {}
+      class X extends Mid {}
+      class Y extends Mid {}
+      class Z extends Mid {}
+
+      const x1 = X.get();
+      const x2 = X.get();
+      const y1 = Y.get();
+      const y2 = Y.get();
+      const z1 = Z.get();
+      const z2 = Z.get();
+
+      assertHi(
+        [x1, x2, y1, y2, z1, z2],
+        'X=4,X=4,Y=5,Y=5,Z=6,Z=6'
       );
     });
   });
