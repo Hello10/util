@@ -8,4 +8,5 @@ export {default as hasAllKeys} from './hasAllKeys';
 export {default as omitter} from './omitter';
 export {default as randomInt} from './randomInt';
 export {default as rounder} from './rounder';
+export {default as singleton} from './singleton';
 export {default as upto} from './upto';

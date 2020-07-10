@@ -364,6 +364,28 @@
     };
   }
 
+  function singleton(args = {}) {
+    if (args && args.constructor === Function) {
+      args = {
+        Class: args
+      };
+    }
+
+    const {
+      Class,
+      instance = 'instance',
+      key = '_instance'
+    } = args;
+
+    Class[instance] = function instance(...args) {
+      if (!this[key]) {
+        this[key] = new this(...args);
+      }
+
+      return this[key];
+    };
+  }
+
   function upto(n) {
     let i = 0;
     const results = [];
@@ -387,6 +409,7 @@
   exports.omitter = omitter;
   exports.randomInt = randomInt;
   exports.rounder = rounder;
+  exports.singleton = singleton;
   exports.upto = upto;
 
 })));

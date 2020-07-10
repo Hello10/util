@@ -189,6 +189,28 @@ function rounder({
   };
 }
 
+function singleton(args = {}) {
+  if (args && args.constructor === Function) {
+    args = {
+      Class: args
+    };
+  }
+
+  const {
+    Class,
+    instance = 'instance',
+    key = '_instance'
+  } = args;
+
+  Class[instance] = function instance(...args) {
+    if (!this[key]) {
+      this[key] = new this(...args);
+    }
+
+    return this[key];
+  };
+}
+
 function upto(n) {
   let i = 0;
   const results = [];
@@ -202,5 +224,5 @@ function upto(n) {
   };
 }
 
-export { betweener, charkeys, clipper, defined, flattener, hasAllCharkeys, hasAllKeys, omitter, randomInt, rounder, upto };
+export { betweener, charkeys, clipper, defined, flattener, hasAllCharkeys, hasAllKeys, omitter, randomInt, rounder, singleton, upto };
 //# sourceMappingURL=index.modern.js.map
