@@ -1,5 +1,9 @@
+function defined(val) {
+  return typeof val !== 'undefined';
+}
+
 const interval_regex = /(?<left>[[(])\s*(?<left_num>[+-]?([0-9]+([.][0-9]*)?|([.][0-9]+)|∞))\s*,\s*(?<right_num>[+-]?([0-9]+([.][0-9]*)?|([.][0-9]+)|∞))\s*(?<right>[)\]])/;
-function betweener(arg) {
+function interval(arg) {
   if (arg.constructor === String) {
     const match = arg.match(interval_regex);
 
@@ -34,31 +38,62 @@ function betweener(arg) {
     };
   }
 
+  if (Array.isArray(arg)) {
+    const [min, max] = arg;
+    arg = {
+      gte: min,
+      lte: max
+    };
+  }
+
+  const has_gt = defined(arg.gt);
+  const has_gte = defined(arg.gte);
+  const has_lt = defined(arg.lt);
+  const has_lte = defined(arg.lte);
+  const has_both_g = has_gt && has_gte;
+  const has_both_l = has_lt && has_lte;
+  const has_one = has_gt || has_gte || has_lt || has_lte;
+
+  if (has_both_g || has_both_l || !has_one) {
+    throw new Error('Invalid interval');
+  }
+
+  return arg;
+}
+
+function betweener(arg) {
   const {
     lt,
     lte,
     gt,
     gte
-  } = arg;
+  } = interval(arg);
   return function between(value) {
-    if (gt && value <= gt) {
+    if (defined(gt) && value <= gt) {
       return false;
     }
 
-    if (gte && value < gte) {
+    if (defined(gte) && value < gte) {
       return false;
     }
 
-    if (lt && value >= lt) {
+    if (defined(lt) && value >= lt) {
       return false;
     }
 
-    if (lte && value > lte) {
+    if (defined(lte) && value > lte) {
       return false;
     }
 
     return true;
   };
+}
+
+function buildEnum(types) {
+  return types.reduce((Types, type) => {
+    Types[type] = type;
+    return Types;
+  }, {});
 }
 
 function charkeys(obj) {
@@ -69,21 +104,31 @@ function charkeys(obj) {
   }, {});
 }
 
-function defined(val) {
-  return typeof val !== 'undefined';
-}
-
-function clipper({
-  min,
-  max
-}) {
-  return function clip(value) {
-    if (defined(min) && value < min) {
-      value = min;
+const {
+  MIN_VALUE
+} = Number;
+function clipper(arg) {
+  const {
+    lt,
+    lte,
+    gt,
+    gte
+  } = interval(arg);
+  return function constrain(value) {
+    if (defined(gt) && value <= gt) {
+      return gt + MIN_VALUE;
     }
 
-    if (defined(max) && value > max) {
-      value = max;
+    if (defined(gte) && value < gte) {
+      return gte;
+    }
+
+    if (defined(lt) && value >= lt) {
+      return lt - MIN_VALUE;
+    }
+
+    if (defined(lte) && value > lte) {
+      return lte;
     }
 
     return value;
@@ -130,6 +175,62 @@ function hasAllCharkeys(keys) {
   };
 }
 
+const types = buildEnum(['array', 'first', 'last']);
+function indexer(arg) {
+  if (!arg) {
+    arg = {
+      attr: 'id',
+      type: types.first
+    };
+  }
+
+  if (arg.constructor === String) {
+    arg = {
+      attr: arg
+    };
+  }
+
+  const {
+    attr,
+    type = types.array
+  } = arg;
+
+  if (!(type in types)) {
+    throw new Error('Invalid index type');
+  }
+
+  return function index(items) {
+    const index = {};
+
+    for (const item of items) {
+      const value = item[attr];
+      const has_value = (value in index);
+
+      if (type === types.array) {
+        if (!has_value) {
+          index[value] = [];
+        }
+
+        index[value].push(item);
+      } else if (type === types.first) {
+        if (!has_value) {
+          index[value] = item;
+        }
+      } else {
+        index[value] = item;
+      }
+    }
+
+    return index;
+  };
+}
+
+for (const [k, v] of Object.entries(types)) {
+  indexer[k] = v;
+}
+
+const indexById = indexer();
+
 function omitter(keys) {
   let test;
 
@@ -150,13 +251,26 @@ function omitter(keys) {
   };
 }
 
-function randomInt({
-  min = 0,
-  max = 1
-} = {}) {
+const {
+  isInteger
+} = Number;
+function randomInt(arg = {}) {
+  if (Array.isArray(arg)) {
+    const [_min, _max] = arg;
+    arg = {
+      min: _min,
+      max: _max
+    };
+  } else if (isInteger(arg)) {
+    arg = {
+      max: arg
+    };
+  }
+
   const {
-    isInteger
-  } = Number;
+    min = 0,
+    max = 1
+  } = arg;
 
   if (!isInteger(min) || !isInteger(max)) {
     throw new Error('min and max must be integers');
@@ -189,11 +303,15 @@ function rounder({
   };
 }
 
-function singleton(args = {}) {
+function singleton(args) {
   if (args && args.constructor === Function) {
     args = {
       Class: args
     };
+  }
+
+  if (!args || !args.Class) {
+    throw new Error('Must pass constructor or object with "Class" prop');
   }
 
   const {
@@ -224,5 +342,5 @@ function upto(n) {
   };
 }
 
-export { betweener, charkeys, clipper, defined, flattener, hasAllCharkeys, hasAllKeys, omitter, randomInt, rounder, singleton, upto };
+export { betweener, buildEnum, charkeys, clipper, defined, flattener, hasAllCharkeys, hasAllKeys, indexById, indexer, interval, omitter, randomInt, rounder, singleton, upto };
 //# sourceMappingURL=index.modern.js.map

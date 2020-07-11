@@ -1,8 +1,12 @@
-export default function singleton (args = {}) {
+export default function singleton (args) {
   if (args && (args.constructor === Function)) {
     args = {
       Class: args
     };
+  }
+
+  if (!args || !args.Class) {
+    throw new Error('Must pass constructor or object with "Class" prop');
   }
 
   const {
