@@ -558,6 +558,7 @@ function sleep(time_ms) {
   });
 }
 
+/// iterable that returns array or function
 function upto(n) {
   let i = 0;
   const results = [];
