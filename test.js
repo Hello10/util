@@ -3,6 +3,7 @@ const Assert = require('assert');
 const {
   betweener,
   buildEnum,
+  capitalize,
   charkeys,
   clipper,
   defined,
@@ -12,10 +13,13 @@ const {
   indexById,
   indexer,
   interval,
+  mapp,
+  now,
   omitter,
   randomInt,
   rounder,
   singleton,
+  sleep,
   upto
 } = require('./dist/index');
 
@@ -71,6 +75,12 @@ describe('utils', ()=> {
         two: 'two',
         three: 'three'
       });
+    });
+  });
+
+  describe('capitalize', ()=> {
+    it('should capitalize', ()=> {
+      Assert.equal(capitalize('donkey'), 'Donkey');
     });
   });
 
@@ -138,6 +148,72 @@ describe('utils', ()=> {
       Assert.equal(defined(x), false);
       Assert.equal(defined(y), false);
       Assert.equal(defined(z), true);
+    });
+  });
+
+  describe('flattener', ()=> {
+    it('Should flatten nested', ()=> {
+      const output = flattener()({
+        a: {
+          b: {
+            c: 1
+          }
+        }
+      });
+      Assert.deepEqual(output, {'a.b.c': 1});
+    });
+
+    it('Should handle empty objects', ()=> {
+      const output = flattener()({
+        a: {}
+      });
+      Assert.deepEqual(output, {a: {}});
+    });
+
+    it('Should handle deeply nested properties', ()=> {
+      const obj = {
+        a: {
+          b: {
+            c: 1,
+            d: 2,
+            x: {
+              y: {
+                z: [1]
+              }
+            }
+          }
+        },
+        x: 'test'
+      };
+      const output = flattener()(obj);
+      const expected = {
+        'a.b.c': 1,
+        'a.b.d': 2,
+        'a.b.x.y.z': [1],
+        x: 'test'
+      };
+      Assert.deepEqual(output, expected);
+    });
+
+    it('Should handle some config params', ()=> {
+      const flatten = flattener({
+        join: ':',
+        into: {'o:m:g': 1}
+      });
+      const output = flatten({
+        o: {
+          m: {
+            c: 'how bizarre',
+            d: 'if you leave'
+          }
+        }
+      });
+      const expected = {
+        'o:m:g': 1,
+        'o:m:d': 'if you leave',
+        'o:m:c': 'how bizarre'
+      };
+      Assert.deepEqual(output, expected);
     });
   });
 
@@ -279,6 +355,49 @@ describe('utils', ()=> {
           interval(input);
         });
       }
+    });
+  });
+
+  describe('mapp', ()=> {
+    const nums = [1, 2, 3, 4, 5, 6, 7];
+
+    it('should asynchronously map', async ()=> {
+      async function sleepySquare (num) {
+        await sleep(num);
+        return num * num;
+      }
+      const squares = await mapp(nums, sleepySquare);
+      Assert.deepEqual(squares, [1, 4, 9, 16, 25, 36, 49]);
+    });
+
+    it('should handle throws', async ()=> {
+      const gromp = new Error('GROMP');
+      async function grumpySquare (num) {
+        await sleep(num);
+        if (num === 5) {
+          throw gromp;
+        } else {
+          return num * num;
+        }
+      }
+
+      try {
+        await mapp(nums, grumpySquare);
+        Assert.fail();
+      } catch (error) {
+        Assert.equal(error, gromp);
+      }
+    });
+  });
+
+  describe('now', ()=> {
+    it('should return date representing now', (done)=> {
+      const a = now();
+      setTimeout(()=> {
+        const b = now();
+        Assert(a.getTime() < b.getTime());
+        done();
+      }, 20);
     });
   });
 
@@ -470,13 +589,18 @@ describe('utils', ()=> {
     });
   });
 
-  describe('upto', ()=> {
-    it('should call a function repeatedly with index', ()=> {
-      const squares = [];
-      upto(9)((i)=> {
-        squares.push(i * i);
-      });
-      Assert.deepEqual(squares, [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]);
+  describe('sleep', ()=> {
+    function ms () {
+      const now = new Date();
+      return now.getTime();
+    }
+
+    it('should sleep', async ()=> {
+      const start = ms();
+      const time = 25;
+      await sleep(time);
+      const delta = ms() - start;
+      Assert((delta > time) && (delta < (time * 3)));
     });
   });
 
@@ -484,72 +608,6 @@ describe('utils', ()=> {
     it('should call a function repeatedly with index', ()=> {
       const squares = upto(9)((i)=> i * i);
       Assert.deepEqual(squares, [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]);
-    });
-  });
-
-  describe('flattener', ()=> {
-    it('Should flatten nested', ()=> {
-      const output = flattener()({
-        a: {
-          b: {
-            c: 1
-          }
-        }
-      });
-      Assert.deepEqual(output, {'a.b.c': 1});
-    });
-
-    it('Should handle empty objects', ()=> {
-      const output = flattener()({
-        a: {}
-      });
-      Assert.deepEqual(output, {a: {}});
-    });
-
-    it('Should handle deeply nested properties', ()=> {
-      const obj = {
-        a: {
-          b: {
-            c: 1,
-            d: 2,
-            x: {
-              y: {
-                z: [1]
-              }
-            }
-          }
-        },
-        x: 'test'
-      };
-      const output = flattener()(obj);
-      const expected = {
-        'a.b.c': 1,
-        'a.b.d': 2,
-        'a.b.x.y.z': [1],
-        x: 'test'
-      };
-      Assert.deepEqual(output, expected);
-    });
-
-    it('Should handle some config params', ()=> {
-      const flatten = flattener({
-        join: ':',
-        into: {'o:m:g': 1}
-      });
-      const output = flatten({
-        o: {
-          m: {
-            c: 'how bizarre',
-            d: 'if you leave'
-          }
-        }
-      });
-      const expected = {
-        'o:m:g': 1,
-        'o:m:d': 'if you leave',
-        'o:m:c': 'how bizarre'
-      };
-      Assert.deepEqual(output, expected);
     });
   });
 });

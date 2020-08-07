@@ -1,5 +1,6 @@
 export {default as betweener} from './betweener';
 export {default as buildEnum} from './buildEnum';
+export {default as capitalize} from './capitalize';
 export {default as charkeys} from './charkeys';
 export {default as clipper} from './clipper';
 export {default as defined} from './defined';
@@ -9,8 +10,11 @@ export {default as hasAllKeys} from './hasAllKeys';
 export {default as indexById} from './indexById';
 export {default as indexer} from './indexer';
 export {default as interval} from './interval';
+export {default as mapp} from './mapp';
+export {default as now} from './now';
 export {default as omitter} from './omitter';
 export {default as randomInt} from './randomInt';
 export {default as rounder} from './rounder';
 export {default as singleton} from './singleton';
+export {default as sleep} from './sleep';
 export {default as upto} from './upto';

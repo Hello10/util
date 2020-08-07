@@ -266,6 +266,12 @@ function buildEnum(types) {
   }, {});
 }
 
+function capitalize(string) {
+  const first = string.charAt(0).toUpperCase();
+  const rest = string.slice(1);
+  return `${first}${rest}`;
+}
+
 function charkeys(obj) {
   return Object.entries(obj).reduce((singled, [key, val]) => {
     const k = key[0];
@@ -401,6 +407,53 @@ for (const [k, v] of Object.entries(types)) {
 
 const indexById = indexer();
 
+const mapp = function (iterable, map, options = {}) {
+  try {
+    let concurrency = options.concurrency || Infinity;
+    let index = 0;
+    const results = [];
+    const runs = [];
+    const iterator = iterable[Symbol.iterator]();
+    const sentinel = Symbol('sentinel');
+
+    function run() {
+      const {
+        done,
+        value
+      } = iterator.next();
+
+      if (done) {
+        return sentinel;
+      } else {
+        const i = index++;
+        const p = map(value, i);
+        return Promise.resolve(p).then(result => {
+          results[i] = result;
+          return run();
+        });
+      }
+    }
+
+    while (concurrency-- > 0) {
+      const r = run();
+
+      if (r === sentinel) {
+        break;
+      } else {
+        runs.push(r);
+      }
+    }
+
+    return Promise.all(runs).then(() => results);
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+function now() {
+  return new Date();
+}
+
 function omitter(keys) {
   let test;
 
@@ -499,6 +552,12 @@ function singleton(args) {
   };
 }
 
+function sleep(time_ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, time_ms);
+  });
+}
+
 function upto(n) {
   let i = 0;
   const results = [];
@@ -514,6 +573,7 @@ function upto(n) {
 
 exports.betweener = betweener;
 exports.buildEnum = buildEnum;
+exports.capitalize = capitalize;
 exports.charkeys = charkeys;
 exports.clipper = clipper;
 exports.defined = defined;
@@ -523,9 +583,12 @@ exports.hasAllKeys = hasAllKeys;
 exports.indexById = indexById;
 exports.indexer = indexer;
 exports.interval = interval;
+exports.mapp = mapp;
+exports.now = now;
 exports.omitter = omitter;
 exports.randomInt = randomInt;
 exports.rounder = rounder;
 exports.singleton = singleton;
+exports.sleep = sleep;
 exports.upto = upto;
 //# sourceMappingURL=index.js.map
