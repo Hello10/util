@@ -1,3 +1,145 @@
+//import isFunction from './isFunction';
+function array(...args) {
+  let a;
+
+  if (args.length > 1) {
+    a = args;
+  } else {
+    const value = args[0];
+
+    if (Array.isArray(value)) {
+      a = value;
+    } else if ([null, undefined].includes(value)) {
+      a = [];
+    } else {
+      a = [value];
+    }
+  }
+
+  let compare = null;
+
+  function setCompare(c) {
+    compare = c;
+  }
+
+  function _index(item) {
+    if (compare) {
+      return a.findIndex(compare);
+    } else {
+      return a.indexOf(item);
+    }
+  }
+
+  function _split({
+    index,
+    item,
+    dir
+  }) {
+    if (!index) {
+      index = _index(item);
+    }
+
+    let before = a.slice(0, index);
+    let after = a.slice(index + 1);
+    const point = a[index];
+    let split = [];
+
+    if (dir === 0) {
+      split = [point];
+    } else if (dir === -1) {
+      before = [...before, point];
+    } else if (dir === 1) {
+      after = [point, ...after];
+    }
+
+    return [before, ...split, after];
+  }
+
+  function splitLeft(args) {
+    return _split({ ...args,
+      dir: -1
+    });
+  }
+
+  function splitWith(args) {
+    return _split({ ...args,
+      dir: 0
+    });
+  }
+
+  function split(args) {
+    const [before, _, after] = _split({ ...args,
+      dir: 0
+    });
+
+    return [before, after];
+  }
+
+  function splitRight(args) {
+    return _split({ ...args,
+      dir: 1
+    });
+  }
+
+  function remove({
+    index,
+    item
+  }) {
+    if (!index) {
+      index = _index(item);
+    }
+
+    const [before, after] = split(index);
+    return [...before, ...after];
+  }
+
+  function inserter({
+    index,
+    item
+  }) {
+    if (!index) {
+      index = _index(item);
+    }
+
+    return function insert(item) {
+      const [before, after] = split(index);
+      return [...before, item, ...after];
+    };
+  }
+
+  function empty() {
+    return a.length === 0;
+  }
+
+  Object.defineProperties(a, {
+    splitLeft: {
+      value: splitLeft
+    },
+    split: {
+      value: split
+    },
+    splitWith: {
+      value: splitWith
+    },
+    splitRight: {
+      value: splitRight
+    },
+    remove: {
+      value: remove
+    },
+    inserter: {
+      value: inserter
+    },
+    compare: {
+      value: setCompare
+    },
+    empty: {
+      value: empty
+    }
+  });
+  return a;
+}
+
 function defined(val) {
   return typeof val !== 'undefined';
 }
@@ -102,13 +244,38 @@ function capitalize(string) {
   return `${first}${rest}`;
 }
 
-function charkeys(obj) {
-  return Object.entries(obj).reduce((singled, [key, val]) => {
-    const k = key[0];
-    singled[k] = val;
-    return singled;
-  }, {});
+function mapo({
+  key: mapkey,
+  value: mapval
+}) {
+  return function map(obj) {
+    const entries = Object.entries(obj);
+    const mapped = entries.map(([key, value]) => {
+      if (mapkey) {
+        key = mapkey({
+          key,
+          value
+        });
+      }
+
+      if (mapval) {
+        value = mapval({
+          key,
+          value
+        });
+      }
+
+      return [key, value];
+    });
+    return Object.fromEntries(mapped);
+  };
 }
+
+const charkeys = mapo({
+  key: ({
+    key
+  }) => key[0]
+});
 
 const {
   MIN_VALUE
@@ -237,6 +404,20 @@ for (const [k, v] of Object.entries(types)) {
 
 const indexById = indexer();
 
+function isFunction(fn) {
+  if (!fn) {
+    return false;
+  } // TODO?? https://github.com/developit/microbundle/issues/721
+  //return ['Function', 'AsyncFunction'].includes(fn.constructor.name);
+
+
+  const AsyncFunction = (async () => {
+    return null;
+  }).constructor;
+
+  return [Function, AsyncFunction].includes(fn.constructor);
+}
+
 async function mapp(iterable, map, options = {}) {
   let concurrency = options.concurrency || Infinity;
   let index = 0;
@@ -274,6 +455,23 @@ async function mapp(iterable, map, options = {}) {
   }
 
   return Promise.all(runs).then(() => results);
+}
+
+function nonempty(value) {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (value.length !== undefined) {
+    return value.length > 0;
+  }
+
+  if (value.constructor === Object) {
+    const keys = Object.keys(value);
+    return keys.length > 0;
+  }
+
+  return true;
 }
 
 function now() {
@@ -398,5 +596,12 @@ function upto(n) {
   };
 }
 
-export { betweener, buildEnum, capitalize, charkeys, clipper, defined, flattener, hasAllCharkeys, hasAllKeys, indexById, indexer, interval, mapp, now, omitter, randomInt, rounder, singleton, sleep, upto };
+console.log('hi microbundle', {
+  fn: function () {}.constructor,
+  afn: async function () {
+    return Promise.resolve();
+  }.constructor
+});
+
+export { array, betweener, buildEnum, capitalize, charkeys, clipper, defined, flattener, hasAllCharkeys, hasAllKeys, indexById, indexer, interval, isFunction, mapo, mapp, nonempty, now, omitter, randomInt, rounder, singleton, sleep, upto };
 //# sourceMappingURL=index.modern.js.map

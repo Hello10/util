@@ -1,6 +1,7 @@
 const Assert = require('assert');
 
 const {
+  array,
   betweener,
   buildEnum,
   capitalize,
@@ -13,7 +14,10 @@ const {
   indexById,
   indexer,
   interval,
+  isFunction,
+  mapo,
   mapp,
+  nonempty,
   now,
   omitter,
   randomInt,
@@ -24,6 +28,62 @@ const {
 } = require('./dist/index');
 
 describe('utils', ()=> {
+  const a = array(10, 11, 12, 13, 14);
+
+  describe('array', ()=> {
+    it('should convert stuff to be array', ()=> {
+      const it = array('it');
+      Assert.deepEqual(it, ['it']);
+
+      const noop = array(['x', 'y', 'z']);
+      Assert.deepEqual(noop, ['x', 'y', 'z']);
+
+      const something10 = array('something', 10);
+      Assert.deepEqual(something10, ['something', 10]);
+    });
+
+    it('should return empty array for null and undefined', ()=> {
+      const empty = [];
+      const nully = array(null);
+      Assert.deepEqual(nully, empty);
+      const undef = array(undefined);
+      Assert.deepEqual(undef, empty);
+    });
+
+    it('should support .empty', ()=> {
+      const a = array([40, 42]);
+      Assert(!a.empty());
+      const b = array(null);
+      Assert(b.empty());
+    });
+
+    it('should support .split', ()=> {
+      const [before, after] = a.split({index: 2});
+      Assert.deepEqual(before, [10, 11]);
+      Assert.deepEqual(after, [13, 14]);
+      console.log('hi');
+    });
+
+    it('should support .splitWith', ()=> {
+      const [before, split, after] = a.splitWith({index: 2});
+      Assert.deepEqual(before, [10, 11]);
+      Assert.equal(split, 12);
+      Assert.deepEqual(after, [13, 14]);
+    });
+
+    it('should support .splitLeft', ()=> {
+      const [before, after] = a.splitLeft({index: 2});
+      Assert.deepEqual(before, [10, 11, 12]);
+      Assert.deepEqual(after, [13, 14]);
+    });
+
+    it('should support .splitRight', ()=> {
+      const [before, after] = a.splitRight({index: 2});
+      Assert.deepEqual(before, [10, 11]);
+      Assert.deepEqual(after, [12, 13, 14]);
+    });
+  });
+
   describe('betweener', ()=> {
     it('should test intervals', ()=> {
       const betweens = [
@@ -138,7 +198,6 @@ describe('utils', ()=> {
       Assert.equal(defined(z), true);
     });
   });
-
 
   describe('defined', ()=> {
     it('should check definition', ()=> {
@@ -358,6 +417,57 @@ describe('utils', ()=> {
     });
   });
 
+  describe('isFunction', ()=> {
+    function expect (expected) {
+      return (vals)=> {
+        for (const val of vals) {
+          const is_fn = isFunction(val);
+          Assert.equal(is_fn, expected, val);
+        }
+      };
+    }
+
+    it('should test true for functions', ()=> {
+      expect(true)([
+        function derp1 () { return 'derp'; },
+        ()=> {},
+        async function derp2 () { return 'derp2'; },
+        async ()=> {}
+      ]);
+    });
+
+    it('should test false for non functions', ()=> {
+      expect(false)([
+        false,
+        null,
+        undefined,
+        10,
+        new (class Derp {})(),
+        'what'
+      ]);
+    });
+  });
+
+  describe('mapo', ()=> {
+    it('should map objects', ()=> {
+      const upkeys = mapo({
+        key: ({key})=> key.toUpperCase()
+      });
+      Assert.deepEqual(upkeys({x: 10, yyy: 11}), {X: 10, YYY: 11});
+
+      const double = mapo({
+        value: ({value})=> value * 2
+      });
+      Assert.deepEqual(double({z: 12}), {z: 24});
+
+      const doubledouble = mapo({
+        key: ({key})=> `${key}${key}`,
+        value: ({value})=> value * 2
+      });
+      Assert.deepEqual(doubledouble({z: 12}), {zz: 24});
+    });
+  });
+
   describe('mapp', ()=> {
     const nums = [1, 2, 3, 4, 5, 6, 7];
 
@@ -387,6 +497,45 @@ describe('utils', ()=> {
       } catch (error) {
         Assert.equal(error, gromp);
       }
+    });
+  });
+
+  describe('nonempty', ()=> {
+    it('should handle strings', ()=> {
+      Assert(nonempty('wow!'));
+      Assert(!nonempty(''));
+    });
+
+    it('should handle arrays', ()=> {
+      Assert(nonempty([10]));
+      Assert(!nonempty([]));
+    });
+
+    it('should handle objects', ()=> {
+      Assert(nonempty({x: 10}));
+      Assert(!nonempty({}));
+    });
+
+    it('should handle numbers', ()=> {
+      Assert(nonempty(0));
+      Assert(nonempty(10));
+      Assert(nonempty(-0.25));
+    });
+
+    it('should handle booleans', ()=> {
+      Assert(nonempty(true));
+      Assert(nonempty(false));
+    });
+
+    it('should handle instance of class', ()=> {
+      class Donkey {}
+      const donkey = new Donkey();
+      Assert(nonempty(donkey));
+    });
+
+    it('should handle null and undefined', ()=> {
+      Assert(!nonempty(null));
+      Assert(!nonempty(undefined));
     });
   });
 
