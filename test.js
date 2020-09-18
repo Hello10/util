@@ -3,6 +3,7 @@ const Assert = require('assert');
 const {
   array,
   betweener,
+  bit,
   buildEnum,
   capitalize,
   charkeys,
@@ -11,6 +12,7 @@ const {
   flattener,
   hasAllCharkeys,
   hasAllKeys,
+  hasExactKeys,
   indexById,
   indexer,
   interval,
@@ -31,56 +33,212 @@ describe('utils', ()=> {
   const a = array(10, 11, 12, 13, 14);
 
   describe('array', ()=> {
+    function strCompare (a, b) {
+      return a.toString() === b.toString();
+    }
+
     it('should convert stuff to be array', ()=> {
       const it = array('it');
-      Assert.deepEqual(it, ['it']);
+      Assert(it.equals(['it']));
 
       const noop = array(['x', 'y', 'z']);
-      Assert.deepEqual(noop, ['x', 'y', 'z']);
+      Assert(noop.equals(['x', 'y', 'z']));
 
       const something10 = array('something', 10);
-      Assert.deepEqual(something10, ['something', 10]);
+      Assert(something10.equals(['something', 10]));
+
+      Assert(array(it).equals(['it']));
     });
 
     it('should return empty array for null and undefined', ()=> {
       const empty = [];
-      const nully = array(null);
-      Assert.deepEqual(nully, empty);
-      const undef = array(undefined);
-      Assert.deepEqual(undef, empty);
+      Assert(array().equals(empty));
+      Assert(array(null).equals(empty));
+      Assert(array(undefined).equals(empty));
+    });
+
+    it('should allow for custom compare', ()=> {
+      const a = array([1, 2, 3, 4, '5', '6']);
+      a.compare = strCompare;
+      const a5 = a.insert({element: 5, right: 5.5});
+      Assert(a5.equals([1, 2, 3, 4, 5, 5.5, 6]));
+    });
+
+    it('should handle chaining', ()=> {
+      Assert.equal(a.split(1)[1].rest.first, 13);
+    });
+
+    it('should still be an array', ()=> {
+      Assert(Array.isArray(array(1, 2, 3)));
+    });
+
+    it('should support .add', ()=> {
+      Assert(array('a', 'b').add('c').equals(['a', 'b', 'c']));
+    });
+
+    it('should support .contains', ()=> {
+      Assert(array(['a', 'b']).contains('b'));
+      const d3rp = array(['d', '3', 'r', 'p']);
+      d3rp.compare = strCompare;
+      Assert(d3rp.contains(3));
+    });
+
+    it('should support .diffTo and .diffFrom', ()=> {
+      const a = {a: 1};
+      const b = {b: 2};
+      const c = {c: 3};
+      const d = {d: 4};
+      const e = {e: 5};
+      const f = {f: 6};
+
+      const abcde = array([a, b, c, d, e]);
+      const abde = abcde.remove(c);
+      const abdef = abde.add(f);
+
+      let delta = abcde.diffTo(abdef);
+      Assert(delta.add.equals([f]));
+      Assert(delta.remove.equals([c]));
+
+      delta = abcde.diffFrom(abdef);
+      Assert(delta.add.equals([c]), delta.added);
+      Assert(delta.remove.equals([f]), delta.removed);
+
+      const nums = array([1, 2, '3', '4', 5]);
+      nums.compare = strCompare;
+      const numnums = nums
+        .remove({element: 3})
+        .remove({element: 5})
+        .add('10');
+
+      delta = nums.diffTo(numnums);
+      Assert(delta.add.equals([10]));
+      Assert(delta.remove.equals([3, 5]));
+
+      delta = nums.diffFrom(numnums);
+      Assert(delta.add.equals([3, 5]));
+      Assert(delta.remove.equals([10]));
     });
 
     it('should support .empty', ()=> {
-      const a = array([40, 42]);
-      Assert(!a.empty());
-      const b = array(null);
-      Assert(b.empty());
+      Assert(!a.empty);
+      Assert(array(null).empty);
+    });
+
+    it('should support .equals', ()=> {
+      Assert(array('a', 'b', 'c').equals(['a', 'b', 'c']));
+    });
+
+    it('should support .first', ()=> {
+      Assert.equal(a.first, 10);
+      Assert.equal(array([]).first, undefined);
+    });
+
+    it('should support .index', ()=> {
+      const d3rp = array(['d', '3', 'r', 'p']);
+      d3rp.compare = strCompare;
+      Assert.equal(d3rp.index(3), 1);
+      Assert.equal(d3rp.index(10), -1);
+    });
+
+    it('should support .insert', ()=> {
+      const abcde = array(['a', 'b', 'c', 'd', 'e']);
+
+      const zabcde = abcde.insert({index: 0, left: 'z'});
+      Assert(zabcde.equals(['z', 'a', 'b', 'c', 'd', 'e']));
+
+      const mbcde = abcde.insert({element: 'a', replace: 'm'});
+      Assert(mbcde.equals(['m', 'b', 'c', 'd', 'e']));
+
+      const abccde = abcde.insert({index: 2, right: 'c'});
+      Assert(abccde.equals(['a', 'b', 'c', 'c', 'd', 'e']));
+
+      const abbcdde = abcde.insert({index: 2, left: 'b', right: 'd'});
+      Assert(abbcdde.equals(['a', 'b', 'b', 'c', 'd', 'd', 'e']));
+    });
+
+    it('should support .last', ()=> {
+      Assert.equal(a.last, 14);
+      Assert.equal(array([]).last, undefined);
+    });
+
+    it('should support .remove', ()=> {
+      const no12 = a.remove(2);
+      Assert(no12.equals([10, 11, 13, 14]));
+      const no13 = a.remove({element: 13});
+      Assert(no13.equals([10, 11, 12, 14]));
+    });
+
+    it('should support .replace', ()=> {
+      const abc = array(['a', 'b', 'c']);
+      const abe = abc.replace({element: 'c', by: 'e'});
+      Assert(abe.equals(['a', 'b', 'e']));
+      const bbc = abc.replace({index: 0, by: 'b'});
+      Assert(bbc.equals(['b', 'b', 'c']));
+    });
+
+    it('should support .rest', ()=> {
+      Assert(a.rest.equals([11, 12, 13, 14]));
+      Assert(array().rest.equals([]));
+    });
+
+    it('should support .sameSet', ()=> {
+      const a_reordered = [10, 11, 13, 14, 12];
+      Assert(a.sameSet(a_reordered));
+      Assert(a.sameSet(a));
+      Assert(!a.sameSet([10, 11, 12, 13]));
     });
 
     it('should support .split', ()=> {
-      const [before, after] = a.split({index: 2});
-      Assert.deepEqual(before, [10, 11]);
-      Assert.deepEqual(after, [13, 14]);
-      console.log('hi');
+      let result = a.split(2);
+      Assert.deepEqual(result, [[10, 11], [13, 14]]);
+      result = a.split({element: 13});
+      Assert.deepEqual(result, [[10, 11, 12], [14]]);
     });
 
-    it('should support .splitWith', ()=> {
-      const [before, split, after] = a.splitWith({index: 2});
-      Assert.deepEqual(before, [10, 11]);
-      Assert.equal(split, 12);
-      Assert.deepEqual(after, [13, 14]);
+    it('should support .splitCenter', ()=> {
+      let result = a.splitCenter(2);
+      Assert.deepEqual(result, [[10, 11], 12, [13, 14]]);
+      result = a.splitCenter({element: 13});
+      Assert.deepEqual(result, [[10, 11, 12], 13, [14]]);
     });
 
     it('should support .splitLeft', ()=> {
-      const [before, after] = a.splitLeft({index: 2});
-      Assert.deepEqual(before, [10, 11, 12]);
-      Assert.deepEqual(after, [13, 14]);
+      let result = a.splitLeft(2);
+      Assert.deepEqual(result, [[10, 11, 12], [13, 14]]);
+      result = a.splitLeft({element: 13});
+      Assert.deepEqual(result, [[10, 11, 12, 13], [14]]);
     });
 
     it('should support .splitRight', ()=> {
-      const [before, after] = a.splitRight({index: 2});
-      Assert.deepEqual(before, [10, 11]);
-      Assert.deepEqual(after, [12, 13, 14]);
+      let result = a.splitRight(2);
+      Assert.deepEqual(result, [[10, 11], [12, 13, 14]]);
+      result = a.splitRight({element: 13});
+      Assert.deepEqual(result, [[10, 11, 12], [13, 14]]);
+    });
+
+    it('should support .toggle', ()=> {
+      const xyz = array('x', 'y', 'z');
+      const yz = xyz.toggle('x');
+      const xyz2 = yz.toggle('x');
+      Assert(yz.equals(['y', 'z']));
+      Assert(xyz.sameSet(xyz2));
+    });
+
+    it('should support .unwrap', ()=> {
+      let xyz = array('x', 'y', 'z');
+      Assert(xyz.insert !== undefined);
+      xyz = xyz.unwrap();
+      Assert(xyz.insert === undefined);
+    });
+  });
+
+  describe('bit', ()=> {
+    it('should convert to 1 or 0', ()=> {
+      Assert.equal(bit(10), 1);
+      Assert.equal(bit(0), 0);
+      Assert.equal(bit(''), 0);
+      Assert.equal(bit('hi'), 1);
+      Assert.equal(bit(null), 0);
     });
   });
 
@@ -292,6 +450,16 @@ describe('utils', ()=> {
       Assert.equal(xyz({}), false);
       Assert.equal(xyz({x: 10, y: 11}), false);
       Assert.equal(xyz({w: 10, x: 1, y: 2, z: 3}), true);
+    });
+  });
+
+  describe('hasExactKeys', ()=> {
+    it('should check whether has only specified keys', ()=> {
+      const xyz = hasExactKeys(['x', 'y', 'z']);
+      Assert.equal(xyz({}), false);
+      Assert.equal(xyz({x: 10, y: 11}), false);
+      Assert.equal(xyz({w: 10, x: 1, y: 2, z: 3}), false);
+      Assert.equal(xyz({x: 0, y: 2, z: 3}), true);
     });
   });
 
@@ -749,7 +917,7 @@ describe('utils', ()=> {
       const time = 25;
       await sleep(time);
       const delta = ms() - start;
-      Assert((delta > time) && (delta < (time * 3)));
+      Assert((delta > time) && (delta < (time * 4)));
     });
   });
 
