@@ -679,9 +679,9 @@
 
   function flattener({
     join = '.',
-    into = {}
+    into: into_base
   } = {}) {
-    return function flatten(obj, key = null) {
+    return function flatten(obj, key = null, into = into_base || {}) {
       if (obj && obj.constructor === Object) {
         const entries = Object.entries(obj);
 
@@ -689,7 +689,7 @@
           for (const [k, v] of entries) {
             const parts = key ? [key, k] : [k];
             const new_key = parts.join(join);
-            flatten(v, new_key);
+            flatten(v, new_key, into);
           }
         } else {
           into[key] = {};
