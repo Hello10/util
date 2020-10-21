@@ -791,48 +791,44 @@
     // return [Function, AsyncFunction].includes(fn.constructor);
   }
 
-  const mapp = function (iterable, map, options = {}) {
-    try {
-      let concurrency = options.concurrency || Infinity;
-      let index = 0;
-      const results = [];
-      const runs = [];
-      const iterator = iterable[Symbol.iterator]();
-      const sentinel = Symbol('sentinel');
+  async function mapp(iterable, map, options = {}) {
+    let concurrency = options.concurrency || Infinity;
+    let index = 0;
+    const results = [];
+    const runs = [];
+    const iterator = iterable[Symbol.iterator]();
+    const sentinel = Symbol('sentinel');
 
-      function run() {
-        const {
-          done,
-          value
-        } = iterator.next();
+    while (concurrency-- > 0) {
+      const r = run();
 
-        if (done) {
-          return sentinel;
-        } else {
-          const i = index++;
-          const p = map(value, i);
-          return Promise.resolve(p).then(result => {
-            results[i] = result;
-            return run();
-          });
-        }
+      if (r === sentinel) {
+        break;
+      } else {
+        runs.push(r);
       }
-
-      while (concurrency-- > 0) {
-        const r = run();
-
-        if (r === sentinel) {
-          break;
-        } else {
-          runs.push(r);
-        }
-      }
-
-      return Promise.all(runs).then(() => results);
-    } catch (e) {
-      return Promise.reject(e);
     }
-  };
+
+    function run() {
+      const {
+        done,
+        value
+      } = iterator.next();
+
+      if (done) {
+        return sentinel;
+      } else {
+        const i = index++;
+        const p = map(value, i);
+        return Promise.resolve(p).then(result => {
+          results[i] = result;
+          return run();
+        });
+      }
+    }
+
+    return Promise.all(runs).then(() => results);
+  }
 
   function nonempty(value) {
     if (value === null || value === undefined) {
